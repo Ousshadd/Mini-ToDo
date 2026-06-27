@@ -1,0 +1,31 @@
+# Node modules
+node_modules/
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# Docker
+.docker/
+
+# Environment variables
+.env
+.env.local
+
+# IDEs and Editors
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Angular build output
+frontend/toDo/dist/
+frontend/toDo/.angular/
+
+# Temporary files
+tmp/
+*.tmp
