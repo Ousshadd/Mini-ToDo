@@ -1,4 +1,4 @@
-# ✦ Mini ToDo Platform - Microservices Architecture
+# Mini ToDo Platform - Microservices Architecture
 
 Une plateforme full-stack de gestion de tâches (ToDo list) conçue avec une architecture moderne basée sur les **microservices**. .
 
