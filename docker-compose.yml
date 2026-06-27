@@ -1,0 +1,120 @@
+version: '3.8'
+
+services:
+  # ========================
+  # DATABASE
+  # ========================
+  mongodb:
+    image: mongo:7
+    container_name: mini-todo-mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - mini-todo-network
+    restart: unless-stopped
+
+  # ========================
+  # BACKEND MICROSERVICES
+  # ========================
+  auth-api:
+    build:
+      context: ./backend/auth-api
+      dockerfile: Dockerfile
+    container_name: mini-todo-auth-api
+    ports:
+      - "3001:3001"
+    environment:
+      - PORT=3001
+      - MONGO_URI=mongodb://mongodb:27017/auth_db
+      - JWT_SECRET=mini_todo_secret_key_2024
+    depends_on:
+      - mongodb
+    networks:
+      - mini-todo-network
+    restart: unless-stopped
+
+  user-service:
+    build:
+      context: ./backend/user-service
+      dockerfile: Dockerfile
+    container_name: mini-todo-user-service
+    ports:
+      - "3002:3002"
+    environment:
+      - PORT=3002
+      - MONGO_URI=mongodb://mongodb:27017/user_db
+      - JWT_SECRET=mini_todo_secret_key_2024
+    depends_on:
+      - mongodb
+    networks:
+      - mini-todo-network
+    restart: unless-stopped
+
+  todo-service:
+    build:
+      context: ./backend/todo-service
+      dockerfile: Dockerfile
+    container_name: mini-todo-todo-service
+    ports:
+      - "3003:3003"
+    environment:
+      - PORT=3003
+      - MONGO_URI=mongodb://mongodb:27017/todo_db
+      - JWT_SECRET=mini_todo_secret_key_2024
+    depends_on:
+      - mongodb
+    networks:
+      - mini-todo-network
+    restart: unless-stopped
+
+  # ========================
+  # FRONTEND
+  # ========================
+  frontend:
+    build:
+      context: ./frontend/toDo
+      dockerfile: Dockerfile
+    container_name: mini-todo-frontend
+    ports:
+      - "4000:4000"
+    environment:
+      - NG_ALLOWED_HOSTS=localhost
+      - ALLOWED_HOSTS=localhost
+    depends_on:
+      - auth-api
+      - user-service
+      - todo-service
+    networks:
+      - mini-todo-network
+    restart: unless-stopped
+
+  # ========================
+  # API GATEWAY
+  # ========================
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    container_name: mini-todo-nginx
+    ports:
+      - "80:80"
+    depends_on:
+      - auth-api
+      - user-service
+      - todo-service
+      - frontend
+    networks:
+      - mini-todo-network
+    restart: unless-stopped
+
+# ========================
+# NETWORK & VOLUMES
+# ========================
+networks:
+  mini-todo-network:
+    driver: bridge
+
+volumes:
+  mongo_data:
