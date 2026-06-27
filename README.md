@@ -66,7 +66,7 @@ graph TD
 ### Lancer le projet
 1. Clonez ce dépôt sur votre machine locale :
    ```bash
-   git clone <votre-lien-github>
+   git clone https://github.com/Ousshadd/Mini-ToDo.git
    cd Mini_ToDo
    ```
 
