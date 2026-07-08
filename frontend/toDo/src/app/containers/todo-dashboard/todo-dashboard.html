@@ -1,0 +1,93 @@
+<app-navbar />
+
+<main class="container dashboard-container">
+  <div class="dashboard-header">
+    <h1>Mes Tâches</h1>
+    <p>Gérez vos tâches quotidiennes efficacement.</p>
+  </div>
+
+  @if (errorMessage()) {
+    <div class="error-banner">
+      {{ errorMessage() }}
+    </div>
+  }
+
+  <!-- Category Filter Bar -->
+  <div class="category-bar glass-panel">
+    <div class="category-bar-header">
+      <span class="category-bar-title">🏷️ Catégories</span>
+      <button class="btn-add-category" (click)="toggleCategoryForm()" [title]="showCategoryForm() ? 'Fermer' : 'Ajouter'">
+        {{ showCategoryForm() ? '✕' : '+' }}
+      </button>
+    </div>
+
+    @if (showCategoryForm()) {
+      <form class="category-form" (ngSubmit)="onAddCategory()">
+        <input
+          type="text"
+          [(ngModel)]="newCategoryIcon"
+          name="icon"
+          class="category-icon-input"
+          placeholder="📁"
+          maxlength="2"
+        />
+        <input
+          type="text"
+          [(ngModel)]="newCategoryName"
+          name="name"
+          class="category-name-input"
+          placeholder="Nom de la catégorie..."
+          required
+        />
+        <input
+          type="color"
+          [(ngModel)]="newCategoryColor"
+          name="color"
+          class="category-color-input"
+        />
+        <button type="submit" class="btn btn-primary btn-sm">Créer</button>
+      </form>
+    }
+
+    <div class="category-chips">
+      <button
+        class="category-chip"
+        [class.active]="selectedCategoryId() === null"
+        (click)="selectCategory(null)"
+      >
+        Toutes
+      </button>
+      @for (cat of categories(); track cat._id) {
+        <button
+          class="category-chip"
+          [class.active]="selectedCategoryId() === cat._id"
+          [style.--chip-color]="cat.color"
+          (click)="selectCategory(cat._id!)"
+        >
+          {{ cat.icon }} {{ cat.name }}
+          <span class="chip-delete" (click)="onDeleteCategory(cat._id!); $event.stopPropagation()" title="Supprimer">✕</span>
+        </button>
+      }
+    </div>
+  </div>
+
+  <app-todo-form
+    [categories]="categories()"
+    (todoSubmit)="onAddTodo($event)"
+  />
+
+  @if (isLoading()) {
+    <div class="loader-container">
+      <div class="loader"></div>
+      <p>Chargement de vos tâches...</p>
+    </div>
+  } @else {
+    <app-todo-list 
+      [todos]="filteredTodos()" 
+      [categories]="categories()"
+      (statusChange)="onChangeStatus($event)"
+      (editTodo)="onEditTodo($event)"
+      (deleteTodo)="onDeleteTodo($event)"
+    />
+  }
+</main>

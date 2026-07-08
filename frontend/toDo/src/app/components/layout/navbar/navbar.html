@@ -1,0 +1,22 @@
+<nav class="navbar">
+  <div class="navbar-container">
+    <a routerLink="/todos" class="navbar-brand">
+      <span class="brand-icon">📝</span>
+      <span class="brand-text">MiniToDo</span>
+    </a>
+
+    <div class="navbar-actions">
+      @if (authService.isAuthenticated()) {
+        <div class="user-info">
+          <span class="user-greeting">{{ (authService.currentUser$ | async)?.name }}</span>
+        </div>
+        <button class="btn btn-logout" (click)="logout()">
+          <span>Déconnexion</span>
+        </button>
+      } @else {
+        <a routerLink="/login" routerLinkActive="active" class="nav-link">Connexion</a>
+        <a routerLink="/register" routerLinkActive="active" class="btn btn-primary btn-sm">S'inscrire</a>
+      }
+    </div>
+  </div>
+</nav>

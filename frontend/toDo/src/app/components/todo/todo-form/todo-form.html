@@ -1,0 +1,41 @@
+<form (ngSubmit)="onSubmit()" class="todo-form glass-panel">
+  <div class="form-row">
+    <input
+      type="text"
+      [(ngModel)]="title"
+      name="title"
+      placeholder="Nouvelle tâche..."
+      class="todo-input"
+      required
+    />
+    <button type="submit" class="btn btn-primary">
+      + Ajouter
+    </button>
+  </div>
+  <div class="form-row secondary-row">
+    <input
+      type="text"
+      [(ngModel)]="description"
+      name="description"
+      placeholder="Description (optionnel)"
+      class="todo-desc-input"
+    />
+    <select [(ngModel)]="priority" name="priority" class="todo-priority-select">
+      <option value="basse">Basse</option>
+      <option value="moyenne">Moyenne</option>
+      <option value="haute">Haute</option>
+    </select>
+    <select [(ngModel)]="categoryId" name="categoryId" class="todo-category-select">
+      <option value="">Sans catégorie</option>
+      @for (cat of categories(); track cat._id) {
+        <option [value]="cat._id">{{ cat.icon }} {{ cat.name }}</option>
+      }
+    </select>
+    <input
+      type="date"
+      [(ngModel)]="dueDate"
+      name="dueDate"
+      class="todo-date-input"
+    />
+  </div>
+</form>

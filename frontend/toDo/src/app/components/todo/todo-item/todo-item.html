@@ -1,0 +1,63 @@
+<div class="todo-item" [class.completed]="todo().status === 'terminé'">
+  <div class="todo-status">
+    <select [value]="todo().status" (change)="onStatusChange($event)" class="status-select" [class]="'status-' + todo().status.replace(' ', '-')">
+      <option value="à faire">À faire</option>
+      <option value="en cours">En cours</option>
+      <option value="terminé">Terminé</option>
+    </select>
+  </div>
+
+  <div class="todo-content">
+    @if (isEditing) {
+      <div class="edit-form">
+        <input type="text" [(ngModel)]="editData.title" class="edit-input title-input" required>
+        <input type="text" [(ngModel)]="editData.description" class="edit-input" placeholder="Description (optionnel)">
+        <div class="edit-row">
+          <select [(ngModel)]="editData.priority" class="edit-input select-input">
+            <option value="basse">Basse</option>
+            <option value="moyenne">Moyenne</option>
+            <option value="haute">Haute</option>
+          </select>
+          <select [(ngModel)]="editData.categoryId" class="edit-input select-input">
+            <option [ngValue]="null">Sans catégorie</option>
+            @for (cat of categories(); track cat._id) {
+              <option [value]="cat._id">{{ cat.icon }} {{ cat.name }}</option>
+            }
+          </select>
+          <input type="date" [(ngModel)]="editData.dueDate" class="edit-input date-input">
+        </div>
+        <div class="edit-actions">
+          <button class="btn btn-save" (click)="onSaveEdit()">💾 Enregistrer</button>
+          <button class="btn btn-cancel" (click)="onCancelEdit()">❌ Annuler</button>
+        </div>
+      </div>
+    } @else {
+      <div class="todo-header">
+        <h3 class="todo-title">{{ todo().title }}</h3>
+        <span class="badge priority-{{ todo().priority }}">{{ todo().priority }}</span>
+        @if (getCategoryForTodo(); as cat) {
+          <span class="badge category-badge" [style.background]="cat.color + '20'" [style.color]="cat.color">
+            {{ cat.icon }} {{ cat.name }}
+          </span>
+        }
+      </div>
+      @if (todo().description) {
+        <p class="todo-description">{{ todo().description }}</p>
+      }
+      @if (todo().dueDate) {
+        <p class="todo-due-date">📅 Échéance : {{ todo().dueDate | date:'dd/MM/yyyy' }}</p>
+      }
+    }
+  </div>
+
+  <div class="todo-actions">
+    @if (!isEditing) {
+      <button class="btn-action btn-edit" (click)="onEditClick()" title="Modifier">
+        ✏️
+      </button>
+    }
+    <button class="btn-action btn-delete" (click)="onDelete()" title="Supprimer">
+      ✕
+    </button>
+  </div>
+</div>

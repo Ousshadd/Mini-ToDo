@@ -1,0 +1,13 @@
+<app-navbar />
+
+@if (errorMessage()) {
+  <div class="error-banner">
+    {{ errorMessage() }}
+  </div>
+}
+
+@if (isLoginMode()) {
+  <app-login-form (loginSubmit)="onLogin($event)" />
+} @else {
+  <app-register-form (registerSubmit)="onRegister($event)" />
+}

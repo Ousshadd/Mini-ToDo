@@ -1,0 +1,19 @@
+<div class="todo-list">
+  @if (todos().length === 0) {
+    <div class="empty-state">
+      <span class="empty-icon">📋</span>
+      <p>Aucune tâche pour le moment.</p>
+      <p class="empty-hint">Ajoutez votre première tâche ci-dessus !</p>
+    </div>
+  } @else {
+    @for (todo of todos(); track todo._id) {
+      <app-todo-item
+        [todo]="todo"
+        [categories]="categories()"
+        (statusChange)="onStatusChange($event)"
+        (editTodo)="onEditTodo($event)"
+        (deleteTodo)="onDelete($event)"
+      />
+    }
+  }
+</div>
