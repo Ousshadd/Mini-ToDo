@@ -69,6 +69,23 @@ services:
       - mini-todo-network
     restart: unless-stopped
 
+  category-service:
+    build:
+      context: ./backend/category-service
+      dockerfile: Dockerfile
+    container_name: mini-todo-category-service
+    ports:
+      - "3004:3004"
+    environment:
+      - PORT=3004
+      - MONGO_URI=mongodb://mongodb:27017/category_db
+      - JWT_SECRET=mini_todo_secret_key_2024
+    depends_on:
+      - mongodb
+    networks:
+      - mini-todo-network
+    restart: unless-stopped
+
   # ========================
   # FRONTEND
   # ========================
@@ -86,6 +103,7 @@ services:
       - auth-api
       - user-service
       - todo-service
+      - category-service
     networks:
       - mini-todo-network
     restart: unless-stopped
@@ -104,6 +122,7 @@ services:
       - auth-api
       - user-service
       - todo-service
+      - category-service
       - frontend
     networks:
       - mini-todo-network
