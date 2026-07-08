@@ -11,9 +11,23 @@ const todoSchema = new mongoose.Schema({
     default: '',
     trim: true,
   },
-  completed: {
-    type: Boolean,
-    default: false,
+  priority: {
+    type: String,
+    enum: ['basse', 'moyenne', 'haute'],
+    default: 'moyenne',
+  },
+  status: {
+    type: String,
+    enum: ['à faire', 'en cours', 'terminé'],
+    default: 'à faire',
+  },
+  dueDate: {
+    type: Date,
+    default: null,
+  },
+  categoryId: {
+    type: String,
+    default: null,
   },
   userId: {
     type: String,
