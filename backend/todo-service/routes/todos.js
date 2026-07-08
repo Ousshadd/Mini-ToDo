@@ -33,11 +33,15 @@ router.get('/:id', async (req, res) => {
 // POST / — Create a new todo
 router.post('/', async (req, res) => {
   try {
-    const { title, description } = req.body;
+    const { title, description, priority, status, dueDate, categoryId } = req.body;
 
     const todo = new Todo({
       title,
       description,
+      priority,
+      status,
+      dueDate,
+      categoryId,
       userId: req.user.id,
     });
 
@@ -51,11 +55,11 @@ router.post('/', async (req, res) => {
 // PUT /:id — Update a todo
 router.put('/:id', async (req, res) => {
   try {
-    const { title, description, completed } = req.body;
+    const { title, description, priority, status, dueDate, categoryId } = req.body;
 
     const todo = await Todo.findOneAndUpdate(
       { _id: req.params.id, userId: req.user.id },
-      { title, description, completed },
+      { title, description, priority, status, dueDate, categoryId },
       { new: true, runValidators: true }
     );
 
