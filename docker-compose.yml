@@ -15,6 +15,42 @@ services:
       - mini-todo-network
     restart: unless-stopped
 
+  postgres-comments:
+    image: postgres:17-alpine
+    container_name: mini-todo-postgres-comments
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=comments_db
+      - POSTGRES_USER=mini_todo
+      - POSTGRES_PASSWORD=mini_todo_password
+    volumes:
+      - comments_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mini_todo -d comments_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - mini-todo-network
+    restart: unless-stopped
+
+  redis-notifications:
+    image: redis:7-alpine
+    container_name: mini-todo-redis-notifications
+    ports:
+      - "6379:6379"
+    volumes:
+      - notifications_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - mini-todo-network
+    restart: unless-stopped
+
   # ========================
   # BACKEND MICROSERVICES
   # ========================
@@ -86,6 +122,65 @@ services:
       - mini-todo-network
     restart: unless-stopped
 
+  comment-service:
+    build:
+      context: ./backend/comment-service
+      dockerfile: Dockerfile
+    container_name: mini-todo-comment-service
+    ports:
+      - "3005:3005"
+    environment:
+      - PORT=3005
+      - DATABASE_URL=postgresql://mini_todo:mini_todo_password@postgres-comments:5432/comments_db
+      - JWT_SECRET=mini_todo_secret_key_2024
+      - TODO_SERVICE_URL=http://todo-service:3003
+    depends_on:
+      postgres-comments:
+        condition: service_healthy
+      todo-service:
+        condition: service_started
+    networks:
+      - mini-todo-network
+    restart: unless-stopped
+
+  statistics-service:
+    build:
+      context: ./backend/statistics-service
+      dockerfile: Dockerfile
+    container_name: mini-todo-statistics-service
+    ports:
+      - "3006:3006"
+    environment:
+      - JWT_SECRET=mini_todo_secret_key_2024
+      - TODO_SERVICE_URL=http://todo-service:3003
+      - CATEGORY_SERVICE_URL=http://category-service:3004
+    depends_on:
+      - todo-service
+      - category-service
+    networks:
+      - mini-todo-network
+    restart: unless-stopped
+
+  notification-service:
+    build:
+      context: ./backend/notification-service
+      dockerfile: Dockerfile
+    container_name: mini-todo-notification-service
+    ports:
+      - "3007:3007"
+    environment:
+      - JWT_SECRET=mini_todo_secret_key_2024
+      - TODO_SERVICE_URL=http://todo-service:3003
+      - REDIS_URL=redis://redis-notifications:6379/0
+    depends_on:
+      redis-notifications:
+        condition: service_healthy
+      todo-service:
+        condition: service_started
+    networks:
+      - mini-todo-network
+    restart: unless-stopped
+
   # ========================
   # FRONTEND
   # ========================
@@ -104,6 +199,9 @@ services:
       - user-service
       - todo-service
       - category-service
+      - comment-service
+      - statistics-service
+      - notification-service
     networks:
       - mini-todo-network
     restart: unless-stopped
@@ -123,6 +221,9 @@ services:
       - user-service
       - todo-service
       - category-service
+      - comment-service
+      - statistics-service
+      - notification-service
       - frontend
     networks:
       - mini-todo-network
@@ -137,3 +238,5 @@ networks:
 
 volumes:
   mongo_data:
+  comments_data:
+  notifications_data:

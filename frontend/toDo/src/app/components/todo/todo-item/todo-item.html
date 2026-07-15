@@ -48,10 +48,67 @@
         <p class="todo-due-date">📅 Échéance : {{ todo().dueDate | date:'dd/MM/yyyy' }}</p>
       }
     }
+
+    @if (showComments()) {
+      <section class="comments-panel">
+        <div class="comments-heading">
+          <strong>Commentaires</strong>
+          <span>{{ comments().length }}</span>
+        </div>
+
+        @if (commentsLoading()) {
+          <p class="comments-message">Chargement...</p>
+        } @else {
+          @for (comment of comments(); track comment.id) {
+            <div class="comment-row">
+              @if (editingCommentId === comment.id) {
+                <input
+                  type="text"
+                  [(ngModel)]="editingCommentContent"
+                  class="comment-input"
+                  (keyup.enter)="saveCommentEdit(comment.id)"
+                />
+                <button class="comment-small-button save" (click)="saveCommentEdit(comment.id)">✓</button>
+                <button class="comment-small-button" (click)="cancelCommentEdit()">✕</button>
+              } @else {
+                <div class="comment-text">
+                  <p>{{ comment.content }}</p>
+                  <small>{{ comment.createdAt | date:'dd/MM/yyyy HH:mm' }}</small>
+                </div>
+                <button class="comment-small-button" (click)="startCommentEdit(comment)" title="Modifier">✏️</button>
+                <button class="comment-small-button danger" (click)="onDeleteComment(comment.id)" title="Supprimer">✕</button>
+              }
+            </div>
+          } @empty {
+            <p class="comments-message">Aucun commentaire pour cette tâche.</p>
+          }
+        }
+
+        @if (commentError()) {
+          <p class="comment-error">{{ commentError() }}</p>
+        }
+
+        <div class="comment-form">
+          <input
+            type="text"
+            [(ngModel)]="newComment"
+            class="comment-input"
+            placeholder="Ajouter un commentaire..."
+            (keyup.enter)="onAddComment()"
+          />
+          <button class="comment-add-button" (click)="onAddComment()" [disabled]="!newComment.trim()">
+            Ajouter
+          </button>
+        </div>
+      </section>
+    }
   </div>
 
   <div class="todo-actions">
     @if (!isEditing) {
+      <button class="btn-action btn-comment" (click)="toggleComments()" title="Commentaires">
+        💬
+      </button>
       <button class="btn-action btn-edit" (click)="onEditClick()" title="Modifier">
         ✏️
       </button>

@@ -1,8 +1,9 @@
-import { Component, input, output, OnInit } from '@angular/core';
+import { Component, input, output, OnInit, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Todo } from '../../../services/todo';
 import { Category } from '../../../services/category';
+import { CommentService, Comment } from '../../../services/comment';
 
 @Component({
   selector: 'app-todo-item',
@@ -11,6 +12,8 @@ import { Category } from '../../../services/category';
   styleUrl: './todo-item.css',
 })
 export class TodoItemComponent implements OnInit {
+  private commentService = inject(CommentService);
+
   todo = input.required<Todo>();
   categories = input<Category[]>([]);
 
@@ -20,6 +23,14 @@ export class TodoItemComponent implements OnInit {
 
   isEditing = false;
   editData: Partial<Todo> = {};
+
+  showComments = signal(false);
+  comments = signal<Comment[]>([]);
+  commentsLoading = signal(false);
+  commentError = signal('');
+  newComment = '';
+  editingCommentId: number | null = null;
+  editingCommentContent = '';
 
   ngOnInit() {
     this.resetEditData();
@@ -77,5 +88,82 @@ export class TodoItemComponent implements OnInit {
     if (id) {
       this.deleteTodo.emit(id);
     }
+  }
+
+  toggleComments() {
+    this.showComments.update(value => !value);
+    if (this.showComments()) {
+      this.loadComments();
+    }
+  }
+
+  loadComments() {
+    const todoId = this.todo()._id;
+    if (!todoId) return;
+
+    this.commentsLoading.set(true);
+    this.commentError.set('');
+    this.commentService.getComments(todoId).subscribe({
+      next: comments => {
+        this.comments.set(comments);
+        this.commentsLoading.set(false);
+      },
+      error: () => {
+        this.commentError.set('Impossible de charger les commentaires.');
+        this.commentsLoading.set(false);
+      },
+    });
+  }
+
+  onAddComment() {
+    const todoId = this.todo()._id;
+    const content = this.newComment.trim();
+    if (!todoId || !content) return;
+
+    this.commentError.set('');
+    this.commentService.addComment(todoId, content).subscribe({
+      next: response => {
+        this.comments.update(comments => [...comments, response.comment]);
+        this.newComment = '';
+      },
+      error: () => this.commentError.set("Impossible d'ajouter le commentaire."),
+    });
+  }
+
+  startCommentEdit(comment: Comment) {
+    this.editingCommentId = comment.id;
+    this.editingCommentContent = comment.content;
+  }
+
+  cancelCommentEdit() {
+    this.editingCommentId = null;
+    this.editingCommentContent = '';
+  }
+
+  saveCommentEdit(commentId: number) {
+    const content = this.editingCommentContent.trim();
+    if (!content) return;
+
+    this.commentService.updateComment(commentId, content).subscribe({
+      next: response => {
+        this.comments.update(comments =>
+          comments.map(comment => comment.id === commentId ? response.comment : comment)
+        );
+        this.cancelCommentEdit();
+      },
+      error: () => this.commentError.set('Impossible de modifier le commentaire.'),
+    });
+  }
+
+  onDeleteComment(commentId: number) {
+    const previousComments = this.comments();
+    this.comments.update(comments => comments.filter(comment => comment.id !== commentId));
+
+    this.commentService.deleteComment(commentId).subscribe({
+      error: () => {
+        this.comments.set(previousComments);
+        this.commentError.set('Impossible de supprimer le commentaire.');
+      },
+    });
   }
 }

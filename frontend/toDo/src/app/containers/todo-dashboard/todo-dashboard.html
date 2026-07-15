@@ -2,14 +2,155 @@
 
 <main class="container dashboard-container">
   <div class="dashboard-header">
-    <h1>Mes Tâches</h1>
-    <p>Gérez vos tâches quotidiennes efficacement.</p>
+    <div>
+      <h1>Mes Tâches</h1>
+      <p>Gérez vos tâches quotidiennes efficacement.</p>
+    </div>
+    <div class="dashboard-actions">
+      <button class="notification-toggle" (click)="toggleNotifications()">
+        🔔 Alertes
+        @if (unreadNotifications() > 0) {
+          <span>{{ unreadNotifications() }}</span>
+        }
+      </button>
+      <button class="statistics-toggle" (click)="toggleStatistics()">
+        {{ showStatistics() ? 'Masquer les statistiques' : '📊 Mes statistiques' }}
+      </button>
+    </div>
   </div>
 
   @if (errorMessage()) {
     <div class="error-banner">
       {{ errorMessage() }}
     </div>
+  }
+
+  @if (showNotifications()) {
+    <section class="notification-panel glass-panel">
+      <div class="notification-heading">
+        <div>
+          <h2>Alertes de dates limites</h2>
+          <p>Détectées par Python/FastAPI et conservées dans Redis</p>
+        </div>
+        <button class="statistics-refresh" (click)="loadNotifications()" title="Actualiser">↻</button>
+      </div>
+
+      @if (notificationError()) {
+        <p class="statistics-error">{{ notificationError() }}</p>
+      }
+
+      <div class="notification-list">
+        @for (notification of notifications(); track notification.id) {
+          <article
+            class="notification-item"
+            [class.overdue]="notification.type === 'overdue'"
+            [class.read]="notification.read"
+            (click)="markNotificationAsRead(notification)"
+          >
+            <span class="notification-icon">
+              {{ notification.type === 'overdue' ? '⚠️' : '⏰' }}
+            </span>
+            <div>
+              <strong>{{ notification.title }}</strong>
+              <p>{{ notification.message }}</p>
+              <small>Échéance : {{ notification.dueDate | date:'dd/MM/yyyy HH:mm' }}</small>
+            </div>
+            <button
+              class="notification-dismiss"
+              (click)="dismissNotification(notification); $event.stopPropagation()"
+              title="Supprimer l'alerte"
+            >✕</button>
+          </article>
+        } @empty {
+          <p class="statistics-message">Aucune tâche en retard ou prévue dans les prochaines 24 heures.</p>
+        }
+      </div>
+    </section>
+  }
+
+  @if (showStatistics()) {
+    <section class="statistics-panel glass-panel">
+      <div class="statistics-title-row">
+        <div>
+          <h2>Productivité</h2>
+          <p>Calculée par le microservice Python/FastAPI</p>
+        </div>
+        <button class="statistics-refresh" (click)="loadStatistics()" title="Actualiser">↻</button>
+      </div>
+
+      @if (statisticsLoading()) {
+        <p class="statistics-message">Calcul des statistiques...</p>
+      } @else if (statisticsError()) {
+        <p class="statistics-error">{{ statisticsError() }}</p>
+      } @else if (statistics(); as stats) {
+        <div class="statistics-cards">
+          <article>
+            <strong>{{ stats.totalTasks }}</strong>
+            <span>Tâches totales</span>
+          </article>
+          <article>
+            <strong>{{ stats.completedTasks }}</strong>
+            <span>Terminées</span>
+          </article>
+          <article>
+            <strong>{{ stats.completionRate }}%</strong>
+            <span>Taux de complétion</span>
+          </article>
+        </div>
+
+        <div class="statistics-groups">
+          <div class="statistics-group">
+            <h3>Par statut</h3>
+            @for (entry of statisticEntries(stats.byStatus); track entry[0]) {
+              <div class="statistics-bar-row">
+                <div><span>{{ entry[0] }}</span><strong>{{ entry[1] }}</strong></div>
+                <div class="statistics-track">
+                  <span [style.width.%]="statisticWidth(entry[1], stats.totalTasks)"></span>
+                </div>
+              </div>
+            }
+          </div>
+
+          <div class="statistics-group">
+            <h3>Par priorité</h3>
+            @for (entry of statisticEntries(stats.byPriority); track entry[0]) {
+              <div class="statistics-bar-row priority-bar">
+                <div><span>{{ entry[0] }}</span><strong>{{ entry[1] }}</strong></div>
+                <div class="statistics-track">
+                  <span [style.width.%]="statisticWidth(entry[1], stats.totalTasks)"></span>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+
+        <div class="statistics-group category-statistics">
+          <h3>Par catégorie</h3>
+          <div class="category-statistics-list">
+            @for (entry of statisticEntries(stats.byCategory); track entry[0]) {
+              <span>{{ entry[0] }} <strong>{{ entry[1] }}</strong></span>
+            } @empty {
+              <span>Aucune donnée</span>
+            }
+          </div>
+        </div>
+
+        @if (stats.weeklyEvolution.length) {
+          <div class="statistics-group weekly-statistics">
+            <h3>Évolution hebdomadaire</h3>
+            <div class="weekly-list">
+              @for (week of stats.weeklyEvolution; track week.week) {
+                <div>
+                  <strong>{{ week.week }}</strong>
+                  <span>{{ week.created }} créées</span>
+                  <span>{{ week.completed }} terminées</span>
+                </div>
+              }
+            </div>
+          </div>
+        }
+      }
+    </section>
   }
 
   <!-- Category Filter Bar -->
